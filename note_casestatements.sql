@@ -189,5 +189,35 @@ group by order_size -- > to summarize individual categories by column
 ;
 
 
+-- 3. BONUS
+select hire_date, emp_no, first_name, last_name, birth_date, count(*)
+from employees
+group by first_name, last_name, birth_date, emp_no, hire_date
+order by count(*) desc
+;
+
+
+select first_name, last_name, count(*)
+from employees
+group by first_name, last_name
+order by count(*) desc
+;
+
+select first_name, last_name, birth_date, emp_no, count(*)
+from (
+select *
+from employees) as a
+group by first_name, last_name, birth_date, emp_no
+order by count(*) desc
+;
+
+select count(*), hire_date, birth_date
+from employees
+where last_name = 'ghalwash'
+	and first_name = 'sarita'
+    group by hire_date, birth_Date
+;
+
+
 
 
