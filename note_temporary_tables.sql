@@ -102,3 +102,82 @@ DROP table pagel_2182.curr_emp;
 
 -- VERIFY drop
 select * from pagel_2182.curr_emp;
+
+
+-- current average pay per dept
+select rd avg_salary, d.dept_name dept_name
+from
+(select round(avg(salary),0) as rd, dept_no
+from	(select emp_no, salary, dept_no
+		from (select emp_no, salary, to_Date
+				from salaries s
+				where to_date >= curdate()
+				) as a
+		join dept_emp de using (emp_no)
+		where de.to_date >= curdate()
+		) as b
+group by dept_no
+) as c
+join departments d using (dept_no)
+group by dept_no
+;
+
+-- current pay at company
+select emp_no, salary
+from salaries
+where to_date > now()
+;
+
+-- avg and std
+select avg(salary), std(salary)
+from salaries
+where to_date > now()
+;
+
+-- z-score
+-- Returns the current z-scores for each salary
+-- Notice that there are 2 separate scalar subqueries involved
+SELECT salary, d.departments
+	(salary - (SELECT AVG(salary) FROM salaries where to_date > now()))
+	/
+	(SELECT stddev(salary) FROM salaries where to_date > now()) AS zscore
+FROM salaries
+join dept_emp using (emp_no)
+join departments d using (dept_no)
+WHERE to_date > now()
+;
+
+use employees;
+create temporary table pagel_2182.zscores2
+(SELECT departments.*, salary,
+        (salary - (SELECT AVG(salary) FROM salaries where to_date > now()))
+        /
+        (SELECT stddev(salary) FROM salaries where to_date > now()) AS zscore
+    FROM salaries
+    join dept_emp using (emp_no)
+    join departments using (dept_no)
+    WHERE salaries.to_date > now()
+)
+;
+/*Error Code: 1370. execute command denied to user 'pagel_2182'@'%' for routine 'employees.dept_name'
+	fixed */
+select * from pagel_2182.zscores2;
+select * from pagel_2182.zscores2
+order by zscore desc;
+select * from pagel_2182.zscores2
+order by zscore;
+-- The best dept is Sales
+select avg(salary), dept_name, max(zscore), min(zscore)
+from (select * from pagel_2182.zscores2) as b
+group by dept_name
+order by max(zscore)
+;
+-- The worst dept is Human Resources NOT production! 
+select avg(salary), dept_name, max(zscore), min(zscore)
+from (select * from pagel_2182.zscores2) as b
+group by dept_name
+order by min(zscore)
+;
+
+-- CAN USE 'DROP TABLE IF EXISTS <TABLE_NAME>' AND JUST RECREATE THE TABLE USING THE UPDATEC INFORMATION INSTEAD OF UPDATING THE TABLE
+

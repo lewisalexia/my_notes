@@ -238,6 +238,14 @@ from salaries
 where to_date >= curdate()
 ;
 
+-- averge current pay
+select round(avg(salary),2) as curr_avg
+from (select emp_no, salary, to_Date
+from salaries
+where to_date >= curdate()
+) as a
+;
+
 -- VERIFY correct # of current employees
 select count(*)
 from salaries
@@ -266,6 +274,8 @@ from	(select emp_no, salary, dept_no
 		) as b
 group by dept_no
 ;
+
+use employees;
 
 -- join departments on dept_no to get department names
 select rd avg_salary, d.dept_name dept_name
