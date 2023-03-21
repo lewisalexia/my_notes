@@ -293,7 +293,32 @@ select count(active)
 from customers;
 
 
+use sakila;
+-- use the actor, film_actor, and film table
+-- find all movies that 'Zero Cage' has been in
+-- and make a new column that says if the movie
+-- is rate R or not
 
+show tables;
+
+select *
+from actor; -- actor_id, first and last, update date
+select *
+from film_actor; -- actor_id, film_id update date
+select *
+from film; -- film_id, title, desc, release_yr, language_id, rental_rate, legth, update date
+
+select *, if(rating = 'R', 'Yes', 'Not Rated R') as is_rated_r
+from(
+select concat(actor.first_name,' ',actor.last_name) as fullname, title, rating
+from actor
+join film_actor using (actor_id)
+join film using (film_id)
+where actor.first_name = 'Zero'
+	and actor.last_name = 'Cage'
+) as cage_actor
+;
+-- rating r, filter
 
 
 
