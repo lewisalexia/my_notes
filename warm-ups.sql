@@ -320,11 +320,157 @@ where actor.first_name = 'Zero'
 ;
 -- rating r, filter
 
+use employees;
+show tables;
 
+-- Find all employees who are current managers and make more than one 
+-- standard deviation over the companies salary average.
 
+select *
+from departments; -- dept_no, dept_name
+select *
+from dept_emp; -- emp_no, dept_no, from and to_date
+select *
+from dept_manager; -- emp_no, dept_no, from and to_date
+select *
+from employees; -- emp_no, birth and hire_date, first and last_name, gender
+select *
+from salaries; -- emp_no, salary, from and to_date
+select *
+from titles; -- emp_no, title, from and to_date
 
+# current managers
+select e.emp_no, concat(e.first_name,' ',e.last_name) full_name
+from dept_manager d
+join employees e on e.emp_no = d.emp_no
+where d.to_date > curdate()
+;
 
+# std salary
+select round(std(salary),0)
+from salaries
+where to_date>curdate()
+;
 
+# table
+select *
+from dept_manager d
+join employees e on e.emp_no = d.emp_no
+join salaries s on s.emp_no = d.emp_no
+where d.to_date > curdate()
+	and s.to_date > curdate()
+    and s.salary >= (s.salary - '17310')
+;
 
+# historical company average
+select sum(salary)
+from salaries
+;
 
+-- Andrew's Walk Through
+select *
+from employees
+;
 
+select *
+from dept_manager
+;
+
+select *
+from salaries
+;
+
+# current managers with current salary
+select e.first_name, e.last_name, s.salary
+from employees e
+join salaries s using (emp_no)
+where e.emp_no in (select emp_no from dept_manager where dept_manager.to_date > curdate())
+	and s.to_date > curdate()
+    and s.salary > (select avg(salary) + std(salary) from salaries)
+; -- 3
+
+# historical average
+select avg(salary)
+from salaries; -- 63810.7448
+
+# salary within 1 std
+select avg(salary) + std(salary)
+from salaries
+; -- 80715.5731
+
+-- Using the telco_churn DB, give me all the customers who pay over the company monthly average
+-- BONUS: give me the PERCENTAGE of people who pay over the company monthly average
+
+use telco_churn;
+show tables;
+# customers is the 'main' table
+
+select *
+from customers
+; # customer_id, tenure, internet_service_type, contract_type_id, monthly_charges, total_charges, churn
+select *
+from customer_contracts
+; # customer_id, contract_type_id, paperless_billing
+select *
+from contract_types
+; # contract_type_id, contract_type
+select *
+from customer_details
+; # customer_id, gender, senior_citizen, partner, dependents
+select *
+from customer_payments
+; # customer_id, payment_type_id, monthly_charges, total_charges
+
+select avg_bill / num_cust
+from(
+select round(sum(cp.monthly_charges),2) avg_bill, count(c.customer_id) num_cust
+from customer_payments cp
+join customers c using (customer_id)
+where contract_type_id = 1
+) as a
+; # 257,294.15 monthly charges # avg_bill = 66.40
+
+select count(customer_id)
+from customers
+where monthly_charges > (select avg_bill / num_cust
+						from(
+						select round(sum(cp.monthly_charges),2) avg_bill, count(c.customer_id) num_cust
+						from customer_payments cp
+						join customers c using (customer_id)
+						where contract_type_id = 1
+						) as a)
+; # 3824
+
+select count(*)
+from customers
+where contract_type_id = 1
+; # 3875
+
+select (select count(customer_id)
+				from customers
+				where monthly_charges > (select avg_bill / num_cust
+						from(
+						select round(sum(cp.monthly_charges),2) avg_bill, count(c.customer_id) num_cust
+						from customer_payments cp
+						join customers c using (customer_id)
+						where contract_type_id = 1
+						) as a)) 
+                        
+                        / 
+
+						(select count(*)
+						from customers
+						where contract_type_id = 1) * 100 as prct_cust
+; # 98.68%
+
+# Andrew's walkthrough!! So simple! 55%
+select count(customer_id) / (select count(customer_id)
+							from customers) * 100
+from customers
+where monthly_charges > (select avg(monthly_charges) from customers)
+; # 3923
+
+select count(customer_id)
+from customers
+where monthly_charges < (select avg(monthly_charges) from customers)
+; #3 3120
