@@ -474,3 +474,107 @@ select count(customer_id)
 from customers
 where monthly_charges < (select avg(monthly_charges) from customers)
 ; #3 3120
+
+
+use employees;
+
+select *
+from (
+		select distinct t.title
+		from employees e
+		join titles t using (emp_no)
+		) as a
+where hire_date.max()
+	and hire_date < now()
+;
+
+# For each title, find the hire date of the employee that was hired most recently with that title.
+select *
+from(
+	select distinct t.title, max(hire_date)
+	from employees e
+	join titles t using (emp_no)
+where hire_date < now()
+group by t.title
+) as a
+;
+
+select *
+from(
+select distinct title, max(from_date), emp_no
+from titles
+where from_date < now()
+group by title, emp_no) as a
+join employees using (emp_no)
+;
+
+
+select *
+from departments; #dept_no, dept_name
+select *
+from titles; #7 , emp_no, title, from and to_date
+select *
+from dept_emp; #emp_no, dept_no, from and to_date
+select * from dept_manager; #emp_no, dept_no, from_date, to_date
+
+# Write the code necessary to create a cross tabulation of the number of titles by department.
+select *
+from dept_emp de
+left join dept_manager dm using (emp_no, dept_no, from_date, to_date);
+join titles t using (emp_no, from_date, to_date);
+join departments d using (dept_no)
+join dept_manager dm using (dept_no)
+-- where to_date > now()
+;
+
+show databases;
+use telco_normalized;
+
+
+use employees;
+
+select *
+from salaries
+where to_date > now()
+;
+
+
+select round(avg(salary), 2), round(std(salary),2)
+from salaries
+where to_date > now()
+;
+# 72012.24
+# 17309.96
+
+-- warmup
+-- Using the customer, address, city, and country table in the sakila db
+-- find all customers that live in Poland.
+-- Output two columns titled: full_name, email
+
+use sakila;
+show tables;
+
+select *
+from customer; # customer_id, store_id, first and last_name, email, address_id, active, create_date
+select *
+from address; # address_id, address
+select *
+from city; # city_id, city, country_id
+select * 
+from country; # country_id, country
+
+select concat(customer.first_name,' ',customer.last_name) full_name, email
+from customer
+join address using (address_id)
+join city on address.city_id = city.city_id
+join country on city.country_id = country.country_id
+where country = 'Poland'
+;
+
+
+
+
+
+
+
+
